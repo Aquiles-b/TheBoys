@@ -48,7 +48,7 @@ typedef struct mundo{
 } mundo_t;
 
 int aleat(int a, int b){
-    
+
     return rand() % (b + 1 - a) + a;
 }
 
@@ -70,7 +70,7 @@ int distancia_pontos(coord_t a, coord_t b){
     vet.x = b.x - a.x;
     vet.y = b.y - a.y;
     distancia = sqrt(pow(vet.x, 2) + pow(vet.y, 2));
-    
+
     return ceil(distancia);
 }
 
@@ -140,44 +140,44 @@ conjunto_t **habilidades_das_equipes (mundo_t *mundo) {
 
 /*Cria um vetor de conjutos das equipes aptas para a missao.*/
 conjunto_t **valida_equipes (conjunto_t *missao, conjunto_t **habs_equipes, mundo_t *mundo, int *tam) {
-	int i;
-	conjunto_t **equipes_validas = malloc(sizeof(conjunto_t*)*MAX_LOT*MAX_HABS);
-	if (!equipes_validas)
-		return NULL;
+    int i;
+    conjunto_t **equipes_validas = malloc(sizeof(conjunto_t*)*MAX_LOT*MAX_HABS);
+    if (!equipes_validas)
+        return NULL;
 
-	*tam = 0;
-	for (i = 0; i < mundo->num_locais; i++) {
-		if (contido_cjt(missao, habs_equipes[i])){
-			equipes_validas[*tam] = mundo->locais[i]->equipe;
-			*tam = *tam + 1;
-		}
-	}
-	if (*tam == 0){
+    *tam = 0;
+    for (i = 0; i < mundo->num_locais; i++) {
+        if (contido_cjt(missao, habs_equipes[i])){
+            equipes_validas[*tam] = mundo->locais[i]->equipe;
+            *tam = *tam + 1;
+        }
+    }
+    if (*tam == 0){
         free(equipes_validas);
-		return NULL;
+        return NULL;
     }
 
-	return equipes_validas;
+    return equipes_validas;
 }
 
 /*Acha a menor equipe para a missao. Se nao houver nenhuma retorna -1.*/
-int menor_equipe_apta (conjunto_t **habs_equipes, conjunto_t * missao, mundo_t *mundo) {
-	int i, tam_equipe_valida;
+int menor_equipe_apta (conjunto_t **habs_equipes, conjunto_t * missao, mundo_t *mundo, int id_missao) {
+    int i, tam_equipe_valida;
     int solucao = 0;
 
-	conjunto_t **equipes_validas = valida_equipes(missao, habs_equipes, mundo, &tam_equipe_valida);
-	if (!equipes_validas)
-		return -1;
+    conjunto_t **equipes_validas = valida_equipes(missao, habs_equipes, mundo, &tam_equipe_valida);
+    if (!equipes_validas)
+        return -1;
 
-	for (i = 1; i < tam_equipe_valida; i++) {
-		if (cardinalidade_cjt(equipes_validas[solucao]) > cardinalidade_cjt(equipes_validas[i]))
-			solucao = i;
-	}
-    printf ("HAB_EQS %d:", solucao);
+    for (i = 1; i < tam_equipe_valida; i++) {
+        if (cardinalidade_cjt(equipes_validas[solucao]) > cardinalidade_cjt(equipes_validas[i]))
+            solucao = i;
+    }
+    printf ("%6d:MISSAO %3d HAB_EQS %d:", mundo->tempo_atual, id_missao, solucao);
     imprime_cjt(equipes_validas[solucao]);
-	free(equipes_validas);
+    free(equipes_validas);
 
-	return solucao;
+    return solucao;
 }
 
 /*Devolve o id da equipe escolhida para a missao. 
@@ -189,13 +189,13 @@ int equipe_escolhida(mundo_t *mundo, conjunto_t *missao, int id_missao){
         printf ("%6d:MISSAO %3d HAB_EQL %d:", mundo->tempo_atual, id_missao, i);
         imprime_cjt(habs_equipes[i]);
     }
-    int solucao = menor_equipe_apta(habs_equipes, missao, mundo);
+    int solucao = menor_equipe_apta(habs_equipes, missao, mundo, id_missao);
 
     for (i = 0; i < mundo->num_locais; i++){
         destroi_cjt(habs_equipes[i]);
     }
     free(habs_equipes);
-    
+
     return solucao;
 }
 
@@ -251,13 +251,13 @@ void saida(evento_t *eve, mundo_t *mundo, lef_t *l){
     desistiu = retira_cjt(local->equipe, heroi->id);
     novo_local = aleat(0, mundo->num_locais-1);
     tempo = gera_tempo_deslocamento(heroi, local, mundo->locais[novo_local])/15;
- 
+
     if (!vazia_fila(local->fila) && desistiu){
         retira_fila(local->fila, &id_heroi_fila);
-        printf (", REMOVE FILA HEROI %2d\n", id_heroi_fila);
+        printf (", REMOVE FILA HEROI %2d", id_heroi_fila);
         insere_evento_chegada(id_heroi_fila, local->id, mundo->tempo_atual, l, INICIO);
     }
-   printf ("\n");
+    printf ("\n");
     insere_evento_chegada(heroi->id, novo_local, mundo->tempo_atual+tempo, l, ORDEM);
 }
 
