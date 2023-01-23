@@ -190,8 +190,7 @@ void insere_missao(int id_missao, mundo_t *mundo, lef_t *l){
  * -1 = DESISTE
  * 0 = ENTRA
  * [1, 2, ...] = Posicao na fila */
-mensagem_t *chegada(evento_t *eve, mundo_t *mundo, lef_t *l){
-    mensagem_t *msg = malloc(sizeof(mensagem_t));
+void chegada(evento_t *eve, mundo_t *mundo, lef_t *l, mensagem_t *msg){
     heroi_t *heroi = mundo->herois[eve->dado1];
     local_t *local = mundo->locais[eve->dado2];
     int tpl;
@@ -214,18 +213,15 @@ mensagem_t *chegada(evento_t *eve, mundo_t *mundo, lef_t *l){
         insere_cjt(local->equipe, heroi->id);
         insere_evento_saida(heroi->id, local->id, mundo->tempo_atual+tpl, l);
     }
-
-    return msg;
 }
 
 /*Trata o evento de saida e retorna struct de mensagem com informacoes
  * da saida:
  * -1 = somente saida
  *  [0, 1, ...] = ID do heroi da fila que vai entrar.*/
-mensagem_t *saida(evento_t *eve, mundo_t *mundo, lef_t *l){
+void saida(evento_t *eve, mundo_t *mundo, lef_t *l, mensagem_t *msg){
     heroi_t *heroi = mundo->herois[eve->dado1];
     local_t *local = mundo->locais[eve->dado2];
-    mensagem_t *msg = malloc(sizeof(mensagem_t));
     int id_heroi_fila, novo_local, tempo, desistiu;
 
     msg->tipo = TIPO_SAIDA;
@@ -240,8 +236,6 @@ mensagem_t *saida(evento_t *eve, mundo_t *mundo, lef_t *l){
         msg->dado = id_heroi_fila;
     }
     insere_evento_chegada(heroi->id, novo_local, mundo->tempo_atual+tempo, l, ORDEM);
-
-    return msg;
 }
 
 /*Trata o evento missao e retorna struct mensagem com informacoes da missao
@@ -250,20 +244,16 @@ mensagem_t *saida(evento_t *eve, mundo_t *mundo, lef_t *l){
  * [1, N_LOCAIS] = Equipes 
  * [dado] = Equipe escolhida (Se for NULL entao nenhuma equipe 
  * e valida.)*/
-mensagem_t *missao(evento_t *eve, mundo_t *mundo, lef_t *l){
-    mensagem_t *msg_missao = malloc(sizeof(mensagem_t));
+void missao(evento_t *eve, mundo_t *mundo, lef_t *l, mensagem_t *msg_missao){
     msg_missao->tipo = TIPO_MISSAO;
-    msg_missao->missao = malloc(sizeof(conjunto_t*)*mundo->num_locais + 1);
     msg_missao->missao[0] = cria_subcjt_cjt(mundo->todas_habs, aleat(3, 6));
     equipe_escolhida(mundo, msg_missao);
 
     if (msg_missao->dado != -1){
         aumenta_xp_equipe(mundo, msg_missao->dado-1);
-        return msg_missao;
+        return;
     }
     insere_missao(eve->dado1, mundo, l);
-
-    return msg_missao;
 }
 
 /*Gera os herois e os retorna em um vetor.*/
@@ -424,24 +414,20 @@ void imprime_evento(mundo_t *mundo, evento_t *evento, mensagem_t *msg){
 }
 
 /*Desaloca a struct mensagem_t.*/
-mensagem_t *desaloca_msg(mensagem_t *msg){
+void desaloca_missao(mensagem_t *msg){
     int i;
 
-    if (msg->tipo == TIPO_MISSAO){
-        for (i = 0; i < N_LOCAIS+1; i++) {
-            destroi_cjt(msg->missao[i]);
-        }
-        free(msg->missao);
+    for (i = 0; i <= N_LOCAIS; i++) {
+        msg->missao[i] = destroi_cjt(msg->missao[i]);
     }
-    free(msg);
-    return NULL;
 }
 
 int main(){
     mundo_t *mundo = cria_mundo();
     lef_t *l = cria_lef();
     evento_t *evento;
-    mensagem_t *mensagem;
+    mensagem_t *mensagem = malloc(sizeof(mensagem_t));
+    mensagem->missao = malloc(sizeof(conjunto_t*)*N_LOCAIS+1);
     int fim_nao_chegou = 1;
 
     srand(0);
@@ -452,16 +438,15 @@ int main(){
         mundo->tempo_atual = evento->tempo;
         switch (evento->tipo){
             case TIPO_CHEGADA:
-                mensagem = chegada(evento, mundo, l);
+                chegada(evento, mundo, l, mensagem);
                 break;
             case TIPO_SAIDA:
-                mensagem = saida(evento, mundo, l);
+                saida(evento, mundo, l, mensagem);
                 break;
             case TIPO_MISSAO:
-                mensagem = missao(evento, mundo, l);
+                missao(evento, mundo, l, mensagem);
                 break;
             case TIPO_FIM:
-                mensagem = malloc(sizeof(mensagem_t));
                 mensagem->tipo = TIPO_FIM;
                 fim_nao_chegou = 0;
                 break;
@@ -469,9 +454,11 @@ int main(){
                 break;
         }
         imprime_evento(mundo, evento, mensagem);
-        mensagem = desaloca_msg(mensagem);
+        if (mensagem->tipo == TIPO_MISSAO)
+            desaloca_missao(mensagem);
         free(evento);
     }
+    free(mensagem->missao);
     free(mensagem);
     destroi_lef(l);
     ragnarok(mundo);
