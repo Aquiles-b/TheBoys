@@ -439,6 +439,18 @@ informacoes_t *cria_info(){
     return informacoes; 
 }
 
+/*Desaloca a memoria da struct informacoes*/
+informacoes_t *destroi_info(informacoes_t *informacoes){
+    if (!informacoes)
+        return NULL;
+        
+    if (informacoes->missao != NULL)
+        free(informacoes->missao);
+    free(informacoes);
+
+    return NULL;
+}
+
 int main(){
     mundo_t *mundo = cria_mundo();
     lef_t *l = cria_lef();
@@ -474,8 +486,7 @@ int main(){
             desaloca_missao(informacoes);
         free(evento);
     }
-    free(informacoes->missao);
-    free(informacoes);
+    destroi_info(informacoes);
     destroi_lef(l);
     ragnarok(mundo);
 
