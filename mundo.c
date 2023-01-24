@@ -426,12 +426,24 @@ void desaloca_missao(informacoes_t *info){
     }
 }
 
+/* Inicia struct informacoes_t */
+informacoes_t *cria_info(){
+    informacoes_t *informacoes = malloc(sizeof(informacoes_t));
+    if (!informacoes)
+        return NULL;
+    informacoes->missao = malloc(sizeof(conjunto_t*)*N_LOCAIS+1);
+    if (informacoes->missao == NULL){
+        free(informacoes);
+        return NULL;
+    }
+    return informacoes; 
+}
+
 int main(){
     mundo_t *mundo = cria_mundo();
     lef_t *l = cria_lef();
     evento_t *evento;
-    informacoes_t *informacoes = malloc(sizeof(informacoes_t));
-    informacoes->missao = malloc(sizeof(conjunto_t*)*N_LOCAIS+1);
+    informacoes_t *informacoes = cria_info(); 
     int fim_nao_chegou = 1;
 
     srand(0);
