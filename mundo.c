@@ -28,7 +28,7 @@ typedef struct coord{
 typedef struct informacoes{
     int tipo;
     int dado;
-    conjunto_t **missao;
+    conjunto_t **dados_missao;
 } informacoes_t;
 
 typedef struct heroi{
@@ -134,12 +134,12 @@ void habilidades_das_equipes (mundo_t *mundo, informacoes_t *info_missao) {
     conjunto_t *aux_desaloca; /*uniao_cjt aloca sempre um novo conjuto, entao eh necessario para desalocar o antigo.*/
 
     for (i = 1; i <= mundo->num_locais; i++) {
-        info_missao->missao[i] = cria_cjt(MAX_HABS*MAX_LOT);
+        info_missao->dados_missao[i] = cria_cjt(MAX_HABS*MAX_LOT);
         for (j = 0; j < cardinalidade_cjt(mundo->locais[i-1]->equipe); j++) {
-            aux_desaloca = info_missao->missao[i];
+            aux_desaloca = info_missao->dados_missao[i];
             /*Coloca as habilidades de um heroi da equipe no conjunto de todas as habilidades da equipe.*/
             heroi_da_equipe = mundo->herois[mundo->locais[i-1]->equipe->v[j]];
-            info_missao->missao[i] = uniao_cjt(info_missao->missao[i], heroi_da_equipe->habs);
+            info_missao->dados_missao[i] = uniao_cjt(info_missao->dados_missao[i], heroi_da_equipe->habs);
             aux_desaloca = destroi_cjt (aux_desaloca); /*Desaloca uniao antiga.*/
         }
     }
@@ -150,11 +150,11 @@ void menor_equipe_apta(informacoes_t *info){
     int i;
     info->dado = -1;
     for (i = 1; i <= N_LOCAIS; i++){
-        if (contido_cjt(info->missao[0], info->missao[i])){
+        if (contido_cjt(info->dados_missao[0], info->dados_missao[i])){
             if (info->dado == -1){
                 info->dado = i;
             }
-            else if (cardinalidade_cjt(info->missao[i]) < cardinalidade_cjt(info->missao[info->dado])){
+            else if (cardinalidade_cjt(info->dados_missao[i]) < cardinalidade_cjt(info->dados_missao[info->dado])){
                 info->dado = i;
             }
         }
@@ -249,7 +249,7 @@ void saida(evento_t *eve, mundo_t *mundo, lef_t *l, informacoes_t *info){
  * e valida.)*/
 void missao(evento_t *eve, mundo_t *mundo, lef_t *l, informacoes_t *info_missao){
     info_missao->tipo = TIPO_MISSAO;
-    info_missao->missao[0] = cria_subcjt_cjt(mundo->todas_habs, aleat(3, 6));
+    info_missao->dados_missao[0] = cria_subcjt_cjt(mundo->todas_habs, aleat(3, 6));
     equipe_escolhida(mundo, info_missao);
 
     if (info_missao->dado != -1){
@@ -362,10 +362,10 @@ void aux_imprime_missao(mundo_t *mundo, informacoes_t *info, int tempo, int id){
     int i;
 
     printf ("%6d:MISSAO %3d HAB_REQ ", tempo, id); 
-    imprime_cjt(info->missao[0]);
+    imprime_cjt(info->dados_missao[0]);
     for (i = 0; i < N_LOCAIS; i++) {
         printf ("%6d:MISSAO %3d HAB_EQL %d:", tempo, id, i); 
-        imprime_cjt(info->missao[i+1]);
+        imprime_cjt(info->dados_missao[i+1]);
     }
     if (info->dado == -1){
         printf ("%6d:MISSAO %3d IMPOSSIVEL\n", tempo, id); 
@@ -422,7 +422,7 @@ void desaloca_missao(informacoes_t *info){
     int i;
 
     for (i = 0; i <= N_LOCAIS; i++) {
-        info->missao[i] = destroi_cjt(info->missao[i]);
+        info->dados_missao[i] = destroi_cjt(info->dados_missao[i]);
     }
 }
 
@@ -431,8 +431,8 @@ informacoes_t *cria_info(){
     informacoes_t *informacoes = malloc(sizeof(informacoes_t));
     if (!informacoes)
         return NULL;
-    informacoes->missao = malloc(sizeof(conjunto_t*)*N_LOCAIS+1);
-    if (informacoes->missao == NULL){
+    informacoes->dados_missao = malloc(sizeof(conjunto_t*)*(N_LOCAIS+1));
+    if (informacoes->dados_missao == NULL){
         free(informacoes);
         return NULL;
     }
@@ -444,8 +444,8 @@ informacoes_t *destroi_info(informacoes_t *informacoes){
     if (!informacoes)
         return NULL;
         
-    if (informacoes->missao != NULL)
-        free(informacoes->missao);
+    if (informacoes->dados_missao != NULL)
+        free(informacoes->dados_missao);
     free(informacoes);
 
     return NULL;
